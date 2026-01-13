@@ -1,4 +1,4 @@
-# Vectorizer - Conversor de Imagens para SVG
+# Vectorizer - Conversor de Imagens
 
 Aplicacao web para converter imagens raster (PNG, JPG, etc) em vetores de alta qualidade usando a API do Vectorizer.AI.
 
@@ -13,8 +13,8 @@ Aplicacao web para converter imagens raster (PNG, JPG, etc) em vetores de alta q
 - 5 formatos de saida: SVG, EPS, PDF, DXF, PNG
 - Status da conta em tempo real (plano, creditos)
 - Exibicao de creditos calculados no modo test
-- Download e copia do resultado
-- Configuracao via variaveis de ambiente ou interface
+- Download e visualizacao no navegador
+- Configuracao por variaveis de ambiente (backend)
 - Interface moderna e responsiva
 
 ## Tecnologias
@@ -33,11 +33,7 @@ npm install
 
 ## Configuracao
 
-Existem duas formas de configurar as credenciais:
-
-### Via variaveis de ambiente (recomendado para deploy)
-
-Crie um arquivo `.env` baseado no `.env.example`:
+Crie um arquivo `.env` na raiz do projeto:
 
 ```env
 VECTORIZER_API_ID=seu_api_id
@@ -52,10 +48,6 @@ AUTH_PASSWORD=sua_senha
 
 Se `AUTH_USERNAME` e `AUTH_PASSWORD` estiverem configurados, a aplicacao exigira login para acessar. Isso e util para proteger a interface em ambientes de producao.
 
-### Via interface
-
-Se nenhuma variavel de ambiente estiver configurada, a aplicacao exibira uma tela para inserir as credenciais manualmente. Elas serao salvas no localStorage do navegador.
-
 ## Obtendo Credenciais
 
 1. Acesse [vectorizer.ai/api](https://vectorizer.ai/api)
@@ -65,6 +57,16 @@ Se nenhuma variavel de ambiente estiver configurada, a aplicacao exibira uma tel
 ## Desenvolvimento
 
 ```bash
+cd server
+npm install
+npm run start
+```
+
+Em outro terminal:
+
+```bash
+cd ..
+npm install
 npm run dev
 ```
 
@@ -82,12 +84,12 @@ npm run build
 |----------|-----------|-------------|
 | `AUTH_USERNAME` | Usuario para login na interface | Opcional* |
 | `AUTH_PASSWORD` | Senha para login na interface | Opcional* |
-| `VECTORIZER_API_ID` | API ID do Vectorizer.AI | Opcional* |
-| `VECTORIZER_API_SECRET` | API Secret do Vectorizer.AI | Opcional* |
+| `VECTORIZER_API_ID` | API ID do Vectorizer.AI | Obrigatorio |
+| `VECTORIZER_API_SECRET` | API Secret do Vectorizer.AI | Obrigatorio |
 
 *Notas:
 - Se `AUTH_USERNAME` e `AUTH_PASSWORD` nao forem configurados, a interface sera acessivel sem login.
-- Se `VECTORIZER_API_ID` e `VECTORIZER_API_SECRET` nao forem configurados, o usuario pode inserir as credenciais manualmente na interface.
+- As credenciais sao lidas pelo backend. O frontend nao solicita nem armazena API ID/Secret.
 
 ### Opcao 1: Docker Compose (recomendado)
 
@@ -145,13 +147,12 @@ docker compose down
 src/
 ├── components/
 │   ├── Header.tsx           # Cabecalho com status da conta
-│   ├── CredentialsModal.tsx # Modal de configuracao
 │   ├── ImageUploader.tsx    # Upload e URL de imagem
 │   ├── ModeSelector.tsx     # Selecao do modo de processamento
 │   ├── FormatSelector.tsx   # Selecao do formato de saida
 │   └── ResultPanel.tsx      # Exibicao do resultado
 ├── hooks/
-│   └── useCredentials.ts    # Gerenciamento de credenciais
+│   └── useAuth.ts           # Login opcional da interface
 ├── lib/
 │   └── vectorizer.ts        # Integracao com API
 ├── types.ts                 # Tipos TypeScript
