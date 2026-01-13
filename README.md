@@ -144,6 +144,16 @@ docker compose down
 ## Estrutura do Projeto
 
 ```
+docker/
+├── Dockerfile               # Build completo (frontend + backend)
+├── docker-compose.yml       # Orquestracao local
+├── nginx.conf               # Proxy e frontend
+└── supervisord.conf         # Nginx + API
+.github/workflows/
+└── docker-image.yml         # Build e push da imagem no CI
+server/
+├── index.js                 # API proxy para Vectorizer.AI
+└── package.json
 src/
 ├── components/
 │   ├── Header.tsx           # Cabecalho com status da conta
@@ -158,7 +168,7 @@ src/
 ├── types.ts                 # Tipos TypeScript
 ├── App.tsx                  # Componente principal
 ├── main.tsx                 # Entry point
-└── index.css               # Estilos globais
+└── index.css                # Estilos globais
 ```
 
 ## API Endpoint
