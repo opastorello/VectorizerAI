@@ -1,5 +1,5 @@
 import { Download, CheckCircle, Copy, Check, Coins } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { VectorizeResult, ProcessingMode } from '../types';
 
 interface ResultPanelProps {
@@ -11,6 +11,31 @@ interface ResultPanelProps {
 export function ResultPanel({ result, isLoading, mode }: ResultPanelProps) {
   const [copied, setCopied] = useState(false);
 
+  const previewUrl = useMemo(() => {
+    if (!result?.content) return null;
+
+    if (!result.isBase64) {
+      const blob = new Blob([result.content], { type: result.contentType || 'application/octet-stream' });
+      return URL.createObjectURL(blob);
+    }
+
+    const binary = atob(result.content);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: result.contentType || 'application/octet-stream' });
+    return URL.createObjectURL(blob);
+  }, [result]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleCopy = async () => {
     if (result?.content) {
       await navigator.clipboard.writeText(result.content);
@@ -21,15 +46,18 @@ export function ResultPanel({ result, isLoading, mode }: ResultPanelProps) {
 
   const handleDownload = () => {
     if (result?.content) {
-      const mimeTypes: Record<string, string> = {
-        svg: 'image/svg+xml',
-        eps: 'application/postscript',
-        pdf: 'application/pdf',
-        dxf: 'application/dxf',
-        png: 'image/png',
-      };
+      let blob: Blob;
+      if (result.isBase64) {
+        const binary = atob(result.content);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        blob = new Blob([bytes], { type: result.contentType || 'application/octet-stream' });
+      } else {
+        blob = new Blob([result.content], { type: result.contentType || 'application/octet-stream' });
+      }
 
-      const blob = new Blob([result.content], { type: mimeTypes[result.format] || 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -71,7 +99,8 @@ export function ResultPanel({ result, isLoading, mode }: ResultPanelProps) {
     );
   }
 
-  const canPreview = result.format === 'svg';
+  const canPreview = Boolean(previewUrl);
+  const canCopy = Boolean(result && !result.isBase64 && result.contentType.includes('svg'));
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
@@ -102,10 +131,20 @@ export function ResultPanel({ result, isLoading, mode }: ResultPanelProps) {
       <div className="p-5">
         {canPreview ? (
           <div className="bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Crect%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2210%22%20height%3D%2210%22%20fill%3D%22%23f1f5f9%22%2F%3E%3C%2Fsvg%3E')] rounded-xl p-4 border border-slate-200 min-h-[280px] flex items-center justify-center">
-            <div
-              dangerouslySetInnerHTML={{ __html: result.content }}
-              className="max-w-full max-h-[260px] [&>svg]:max-w-full [&>svg]:max-h-[260px] [&>svg]:w-auto [&>svg]:h-auto"
-            />
+            {result.contentType.startsWith('image/') ? (
+              <img
+                src={previewUrl || undefined}
+                alt="Preview"
+                className="max-w-full max-h-[260px] object-contain"
+              />
+            ) : (
+              <object
+                data={previewUrl || undefined}
+                type={result.contentType}
+                className="w-full h-[260px]"
+                aria-label="Preview"
+              />
+            )}
           </div>
         ) : (
           <div className="bg-slate-50 rounded-xl p-8 border border-slate-200 min-h-[280px] flex flex-col items-center justify-center">
@@ -119,7 +158,7 @@ export function ResultPanel({ result, isLoading, mode }: ResultPanelProps) {
       </div>
 
       <div className="p-4 border-t border-slate-100 flex gap-3">
-        {canPreview && (
+        {canCopy && (
           <button
             onClick={handleCopy}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-semibold text-sm hover:bg-slate-200 transition-all"
@@ -130,7 +169,7 @@ export function ResultPanel({ result, isLoading, mode }: ResultPanelProps) {
         )}
         <button
           onClick={handleDownload}
-          className={`${canPreview ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-semibold text-sm hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg shadow-emerald-500/25`}
+          className={`${canCopy ? 'flex-1' : 'w-full'} flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-semibold text-sm hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg shadow-emerald-500/25`}
         >
           <Download className="w-4 h-4" />
           Baixar {result.format.toUpperCase()}

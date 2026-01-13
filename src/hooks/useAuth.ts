@@ -10,8 +10,7 @@ interface UseAuthReturn {
 
 const AUTH_STORAGE_KEY = 'vectorizer_auth';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const API_BASE = import.meta.env.VITE_API_BASE || (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/vectorizer-proxy` : '/api');
+const API_BASE = '/api';
 
 export function useAuth(): UseAuthReturn {
   const [isAuthRequired, setIsAuthRequired] = useState<boolean | null>(null);

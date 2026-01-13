@@ -6,13 +6,11 @@ import { ModeSelector } from './components/ModeSelector';
 import { FormatSelector } from './components/FormatSelector';
 import { ResultPanel } from './components/ResultPanel';
 import { LoginPage } from './components/LoginPage';
-import { useCredentials } from './hooks/useCredentials';
 import { useAuth } from './hooks/useAuth';
 import { getAccountStatus, vectorizeImage } from './lib/vectorizer';
 import type { AccountStatus, VectorizeResult, ProcessingMode, OutputFormat } from './types';
 
 function App() {
-  const { credentials, isConfigured } = useCredentials();
   const { isAuthRequired, isAuthenticated, isLoading: authLoading, login, logout } = useAuth();
   const [accountStatus, setAccountStatus] = useState<AccountStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -24,29 +22,25 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const loadAccountStatus = useCallback(async () => {
-    if (!credentials) return;
-
     setStatusLoading(true);
-    const status = await getAccountStatus(credentials);
+    const status = await getAccountStatus();
     setAccountStatus(status);
     setStatusLoading(false);
-  }, [credentials]);
+  }, []);
 
   useEffect(() => {
-    if (isConfigured && credentials) {
-      loadAccountStatus();
-    }
-  }, [isConfigured, credentials, loadAccountStatus]);
+    loadAccountStatus();
+  }, [loadAccountStatus]);
 
   const handleVectorize = async () => {
-    if (!credentials || !selectedImage) return;
+    if (!selectedImage) return;
 
     setError(null);
     setResult(null);
     setIsVectorizing(true);
 
     try {
-      const vectorizeResult = await vectorizeImage(credentials, selectedImage, {
+      const vectorizeResult = await vectorizeImage(selectedImage, {
         mode,
         outputFormat,
       });
@@ -82,37 +76,6 @@ function App() {
 
   if (isAuthRequired && !isAuthenticated) {
     return <LoginPage onLogin={login} />;
-  }
-
-  if (!isConfigured) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 mb-6">
-            <Zap className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Vectorizer</h1>
-          <p className="text-slate-600 mb-6">Credenciais nao configuradas</p>
-
-          <div className="text-left space-y-4">
-            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-              <p className="text-sm text-amber-800 font-medium mb-2">Configure as variaveis de ambiente:</p>
-              <code className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded block mb-1">VECTORIZER_API_ID</code>
-              <code className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded block">VECTORIZER_API_SECRET</code>
-            </div>
-          </div>
-
-          <a
-            href="https://vectorizer.ai/api"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block mt-6 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Obter credenciais no Vectorizer.AI
-          </a>
-        </div>
-      </div>
-    );
   }
 
   return (

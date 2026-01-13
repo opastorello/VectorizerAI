@@ -1,4 +1,4 @@
-FROM node:20-alpine AS frontend-builder
+FROM node:25-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ ENV VITE_API_BASE=/api
 
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:25-alpine
 
 RUN apk add --no-cache nginx supervisor
 

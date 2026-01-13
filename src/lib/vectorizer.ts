@@ -1,18 +1,11 @@
-import type { AccountStatus, Credentials, VectorizeOptions, VectorizeResult } from '../types';
+import type { AccountStatus, VectorizeOptions, VectorizeResult } from '../types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const API_BASE = import.meta.env.VITE_API_BASE || (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/vectorizer-proxy` : '/api');
+const API_BASE = '/api';
 
-function getAuthHeader(credentials: Credentials): string {
-  return 'Basic ' + btoa(`${credentials.apiId}:${credentials.apiSecret}`);
-}
-
-export async function getAccountStatus(credentials: Credentials): Promise<AccountStatus | null> {
+export async function getAccountStatus(): Promise<AccountStatus | null> {
   try {
     const response = await fetch(`${API_BASE}/account`, {
-      headers: {
-        'Authorization': getAuthHeader(credentials),
-      },
+      headers: {},
     });
 
     if (!response.ok) {
@@ -31,7 +24,6 @@ export async function getAccountStatus(credentials: Credentials): Promise<Accoun
 }
 
 export async function vectorizeImage(
-  credentials: Credentials,
   image: File | string,
   options: VectorizeOptions
 ): Promise<VectorizeResult> {
@@ -48,9 +40,7 @@ export async function vectorizeImage(
 
   const response = await fetch(`${API_BASE}/vectorize`, {
     method: 'POST',
-    headers: {
-      'Authorization': getAuthHeader(credentials),
-    },
+    headers: {},
     body: formData,
   });
 
@@ -62,6 +52,8 @@ export async function vectorizeImage(
 
   return {
     content: data.content,
+    contentType: data.contentType || 'application/octet-stream',
+    isBase64: Boolean(data.isBase64),
     format: options.outputFormat,
     creditsCharged: parseFloat(data.creditsCharged) || 0,
     creditsCalculated: parseFloat(data.creditsCalculated) || 0,
