@@ -1,33 +1,26 @@
-name: Docker Image CI
+name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
 
 permissions:
   contents: read
-  packages: write
+  packages: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: docker/setup-buildx-action@v3
-      - name: Log in to GHCR
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
+
+      - name: Validar build Docker
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
-          push: ${{ github.event_name == 'push' }}
-          tags: |
-            ghcr.io/opastorello/vectorizerai:latest
-            ghcr.io/opastorello/vectorizerai:${{ github.sha }}
+          push: false
